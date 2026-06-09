@@ -50,7 +50,7 @@ export class AuthController {
     if (archivo) {
 
       body.fotoPerfil =
-        `http://localhost:3000/uploads/${archivo.filename}`;
+        `https://red-social-tp2-back.onrender.com/uploads/`;
     }
 
     return this.authService.registro(body);

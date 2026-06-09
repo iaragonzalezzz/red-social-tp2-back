@@ -60,8 +60,8 @@ export class PublicacionesController {
       mensaje: body.mensaje,
       usuario: usuario.sub,
       imagen: archivo
-        ? `http://localhost:3000/uploads/${archivo.filename}`
-        : '',
+      ? `https://red-social-tp2-back.onrender.com/uploads/${archivo.filename}`
+      : '',
     };
 
     return this.publicacionesService.crear(data);
