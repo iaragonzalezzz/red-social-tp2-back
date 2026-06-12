@@ -166,47 +166,40 @@ export class PublicacionesService {
     return comentario.save();
   }
   
-  estadisticaPublicacionesPorUsuario(desde: string, hasta: string) {
-  const fechaHasta = new Date(hasta);
-  fechaHasta.setHours(23, 59, 59, 999);
+  async estadisticaPublicacionesPorUsuario(desde: string, hasta: string) {
+  const publicaciones = await this.publicacionModel
+    .find({
+      activo: true,
+      createdAt: {
+        $gte: new Date(desde),
+        $lte: new Date(hasta),
+      },
+    })
+    .populate('usuario', 'nombreUsuario');
 
-  return this.publicacionModel.aggregate([
-    {
-      $match: {
-        activo: true,
-        createdAt: {
-          $gte: new Date(desde),
-          $lte: fechaHasta,
-        },
-      },
-    },
-    {
-      $group: {
-        _id: '$usuario',
-        cantidad: { $sum: 1 },
-      },
-    },
-    {
-      $lookup: {
-        from: 'usuarios',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'usuario',
-      },
-    },
-    {
-      $unwind: '$usuario',
-    },
-    {
-      $project: {
-        _id: 0,
-        usuario: '$usuario.nombreUsuario',
+  const resultado: any[] = [];
+
+  publicaciones.forEach((publicacion: any) => {
+    const nombreUsuario =
+      publicacion.usuario?.nombreUsuario ||
+      'usuario';
+
+    const existente = resultado.find(
+      item => item.usuario === nombreUsuario,
+    );
+
+    if (existente) {
+      existente.cantidad++;
+    } else {
+      resultado.push({
+        usuario: nombreUsuario,
         cantidad: 1,
-      },
-    },
-  ]);
-}
+      });
+    }
+  });
 
+  return resultado;
+}
 estadisticaComentariosTotal(desde: string, hasta: string) {
   return this.comentarioModel.aggregate([
     {
@@ -226,44 +219,38 @@ estadisticaComentariosTotal(desde: string, hasta: string) {
   ]);
 }
 
-estadisticaComentariosPorPublicacion(desde: string, hasta: string) {
-  const fechaHasta = new Date(hasta);
-  fechaHasta.setHours(23, 59, 59, 999);
+async estadisticaComentariosPorPublicacion(desde: string, hasta: string) {
+  const comentarios = await this.comentarioModel
+    .find({
+      createdAt: {
+        $gte: new Date(desde),
+        $lte: new Date(hasta),
+      },
+    })
+    .populate('publicacion', 'titulo');
 
-  return this.comentarioModel.aggregate([
-    {
-      $match: {
-        createdAt: {
-          $gte: new Date(desde),
-          $lte: fechaHasta,
-        },
-      },
-    },
-    {
-      $group: {
-        _id: '$publicacion',
-        cantidad: { $sum: 1 },
-      },
-    },
-    {
-      $lookup: {
-        from: 'publicacions',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'publicacion',
-      },
-    },
-    {
-      $unwind: '$publicacion',
-    },
-    {
-      $project: {
-        _id: 0,
-        publicacion: '$publicacion.titulo',
+  const resultado: any[] = [];
+
+  comentarios.forEach((comentario: any) => {
+    const tituloPublicacion =
+      comentario.publicacion?.titulo ||
+      'Publicación';
+
+    const existente = resultado.find(
+      item => item.publicacion === tituloPublicacion,
+    );
+
+    if (existente) {
+      existente.cantidad++;
+    } else {
+      resultado.push({
+        publicacion: tituloPublicacion,
         cantidad: 1,
-      },
-    },
-  ]);
+      });
+    }
+  });
+
+  return resultado;
 }
 
 estadisticaLikesPorDia(desde: string, hasta: string) {
