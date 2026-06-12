@@ -67,13 +67,14 @@ export class PublicacionesService {
   }
 
   ultimasTresPorUsuario(usuarioId: string) {
-    return this.publicacionModel
-      .find({
-        usuario: usuarioId,
-        activo: true,
-      })
-      .sort({ createdAt: -1 })
-      .limit(3);
+  return this.publicacionModel
+    .find({
+      usuario: new Types.ObjectId(usuarioId),
+      activo: true,
+    })
+    .populate('usuario', 'nombre apellido nombreUsuario fotoPerfil perfil')
+    .sort({ createdAt: -1 })
+    .limit(3);
   }
 
   async eliminar(id: string, usuarioToken: any) {
@@ -166,13 +167,16 @@ export class PublicacionesService {
   }
   
   estadisticaPublicacionesPorUsuario(desde: string, hasta: string) {
+  const fechaHasta = new Date(hasta);
+  fechaHasta.setHours(23, 59, 59, 999);
+
   return this.publicacionModel.aggregate([
     {
       $match: {
         activo: true,
         createdAt: {
           $gte: new Date(desde),
-          $lte: new Date(hasta),
+          $lte: fechaHasta,
         },
       },
     },
@@ -223,12 +227,15 @@ estadisticaComentariosTotal(desde: string, hasta: string) {
 }
 
 estadisticaComentariosPorPublicacion(desde: string, hasta: string) {
+  const fechaHasta = new Date(hasta);
+  fechaHasta.setHours(23, 59, 59, 999);
+
   return this.comentarioModel.aggregate([
     {
       $match: {
         createdAt: {
           $gte: new Date(desde),
-          $lte: new Date(hasta),
+          $lte: fechaHasta,
         },
       },
     },

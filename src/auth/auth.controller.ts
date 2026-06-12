@@ -9,47 +9,28 @@ import {
 
 import { FileInterceptor } from '@nestjs/platform-express';
 
-import { diskStorage } from 'multer';
-
-import { extname } from 'path';
-
 import { AuthService } from './auth.service';
+
+import { storage } from '../cloudinary.config';
 
 @Controller('auth')
 export class AuthController {
-
   constructor(
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
   ) {}
 
   @Post('registro')
-
   @UseInterceptors(
     FileInterceptor('fotoPerfil', {
-
-      storage: diskStorage({
-
-        destination: './uploads',
-
-        filename: (req, file, callback) => {
-
-          const nombre =
-            Date.now() + extname(file.originalname);
-
-          callback(null, nombre);
-        },
-      }),
+      storage,
     }),
   )
-
   registro(
     @UploadedFile() archivo: Express.Multer.File,
     @Body() body: any,
   ) {
-
     if (archivo) {
-      body.fotoPerfil =
-        `https://red-social-tp2-back.onrender.com/uploads/${archivo.filename}`;
+      body.fotoPerfil = archivo.path;
     }
 
     return this.authService.registro(body);
@@ -62,9 +43,8 @@ export class AuthController {
 
   @Post('autorizar')
   autorizar(
-    @Headers('authorization') authorization: string
+    @Headers('authorization') authorization: string,
   ) {
-
     const token =
       authorization?.replace('Bearer ', '');
 
@@ -73,9 +53,8 @@ export class AuthController {
 
   @Post('refrescar')
   refrescar(
-    @Headers('authorization') authorization: string
+    @Headers('authorization') authorization: string,
   ) {
-
     const token =
       authorization?.replace('Bearer ', '');
 

@@ -13,10 +13,10 @@ import {
 
 import { JwtService } from '@nestjs/jwt';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 
 import { PublicacionesService } from './publicaciones.service';
+
+import { storage } from '../cloudinary.config';
 
 @Controller('publicaciones')
 export class PublicacionesController {
@@ -26,26 +26,17 @@ export class PublicacionesController {
   ) {}
 
   obtenerUsuario(authorization: string) {
-  const token = authorization
-    ?.replace('Bearer ', '')
-    ?.trim();
+    const token = authorization
+      ?.replace('Bearer ', '')
+      ?.trim();
 
-  console.log('AUTH HEADER:', authorization);
-  console.log('TOKEN:', token);
-
-  return this.jwtService.verify(token);
+    return this.jwtService.verify(token);
   }
-  
+
   @Post()
   @UseInterceptors(
     FileInterceptor('imagen', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, callback) => {
-          const nombre = Date.now() + extname(file.originalname);
-          callback(null, nombre);
-        },
-      }),
+      storage,
     }),
   )
   crear(
@@ -59,9 +50,7 @@ export class PublicacionesController {
       titulo: body.titulo,
       mensaje: body.mensaje,
       usuario: usuario.sub,
-      imagen: archivo
-      ? `https://red-social-tp2-back.onrender.com/uploads/${archivo.filename}`
-      : '',
+      imagen: archivo ? archivo.path : '',
     };
 
     return this.publicacionesService.crear(data);
